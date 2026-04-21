@@ -1,0 +1,26 @@
+{
+  "name": "@toetslib/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "toetslib": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@toetslib/core": "*",
+    "@toetslib/shared": "*",
+    "@toetslib/ingest": "*",
+    "@toetslib/analyzer": "*",
+    "@toetslib/crawler": "*",
+    "@toetslib/generator": "*",
+    "@toetslib/validator": "*",
+    "commander": "^13.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0"
+  }
+}

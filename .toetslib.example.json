@@ -1,0 +1,17 @@
+{
+  "devCommand": "npm run dev",
+  "devPort": 5173,
+  "baseUrl": "http://localhost:5173",
+  "auth": {
+    "strategy": "form",
+    "loginUrl": "/login",
+    "fields": {
+      "email": "#email",
+      "password": "#password"
+    },
+    "submitSelector": "button[type=submit]"
+  },
+  "exclude": [],
+  "outputDir": "./e2e",
+  "maxHealCycles": 3
+}

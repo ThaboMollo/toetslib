@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>toetsLib User Manual</title>
+<style>
+  @page {
+    size: A4;
+    margin: 2cm 2.5cm;
+    @bottom-center { content: counter(page); }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #1a1a2e;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 2cm;
+  }
+
+  h1, h2, h3, h4 { color: #1a1a2e; font-weight: 600; }
+  h1 { font-size: 28pt; margin-bottom: 8pt; }
+  h2 { font-size: 18pt; margin-top: 28pt; margin-bottom: 12pt; border-bottom: 2px solid #7c3aed; padding-bottom: 6pt; page-break-after: avoid; }
+  h3 { font-size: 13pt; margin-top: 18pt; margin-bottom: 8pt; color: #7c3aed; page-break-after: avoid; }
+  h4 { font-size: 11pt; margin-top: 14pt; margin-bottom: 6pt; }
+
+  p { margin-bottom: 8pt; }
+  ul, ol { margin-bottom: 8pt; padding-left: 20pt; }
+  li { margin-bottom: 4pt; }
+
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 9.5pt;
+    background: #f3f0ff;
+    padding: 1pt 4pt;
+    border-radius: 3pt;
+    color: #5b21b6;
+  }
+
+  pre {
+    background: #1a1a2e;
+    color: #e2e8f0;
+    padding: 12pt 16pt;
+    border-radius: 6pt;
+    margin-bottom: 12pt;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 9pt;
+    line-height: 1.5;
+    page-break-inside: avoid;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+
+  .accent { color: #7c3aed; }
+  .comment { color: #64748b; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12pt;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  th, td { border: 1px solid #e2e8f0; padding: 6pt 10pt; text-align: left; }
+  th { background: #f3f0ff; color: #5b21b6; font-weight: 600; }
+  tr:nth-child(even) { background: #fafafe; }
+
+  .cover {
+    text-align: center;
+    padding-top: 120pt;
+    page-break-after: always;
+  }
+  .cover h1 { font-size: 42pt; color: #7c3aed; margin-bottom: 4pt; }
+  .cover .subtitle { font-size: 16pt; color: #64748b; margin-bottom: 40pt; }
+  .cover .version { font-size: 12pt; color: #94a3b8; }
+  .cover .tagline { font-size: 14pt; color: #1a1a2e; margin-top: 60pt; font-style: italic; }
+
+  .toc { page-break-after: always; }
+  .toc h2 { border-bottom: none; }
+  .toc ul { list-style: none; padding-left: 0; }
+  .toc li { padding: 4pt 0; border-bottom: 1px dotted #e2e8f0; }
+  .toc li a { text-decoration: none; color: #1a1a2e; }
+  .toc .section-num { color: #7c3aed; font-weight: 600; margin-right: 8pt; }
+
+  .callout {
+    background: #f3f0ff;
+    border-left: 4px solid #7c3aed;
+    padding: 10pt 14pt;
+    margin-bottom: 12pt;
+    border-radius: 0 6pt 6pt 0;
+    page-break-inside: avoid;
+  }
+  .callout-warn {
+    background: #fef3c7;
+    border-left-color: #f59e0b;
+  }
+
+  .pipeline-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8pt;
+    margin: 16pt 0;
+    flex-wrap: wrap;
+  }
+  .pipeline-stage {
+    background: #7c3aed;
+    color: white;
+    padding: 8pt 14pt;
+    border-radius: 6pt;
+    font-weight: 600;
+    font-size: 10pt;
+    text-align: center;
+  }
+  .pipeline-arrow { color: #94a3b8; font-size: 16pt; }
+
+  .file-tree {
+    background: #1a1a2e;
+    color: #e2e8f0;
+    padding: 14pt 18pt;
+    border-radius: 6pt;
+    font-family: 'SF Mono', monospace;
+    font-size: 9pt;
+    line-height: 1.6;
+    margin-bottom: 12pt;
+    page-break-inside: avoid;
+  }
+  .file-tree .comment { color: #64748b; }
+
+  .page-break { page-break-before: always; }
+
+  footer { margin-top: 40pt; text-align: center; color: #94a3b8; font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <h1>toetsLib</h1>
+  <p class="subtitle">AI-Powered Playwright Test Generator</p>
+  <p class="version">Version 0.1.0 &mdash; User Manual</p>
+  <p class="tagline">"toets" is Afrikaans for "test"</p>
+  <p class="version" style="margin-top: 80pt;">
+    Point it at your React repo. Get a full Playwright test suite.<br>
+    With screenshots, page objects, and a diagnostic report.
+  </p>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ul>
+    <li><span class="section-num">1</span> Introduction</li>
+    <li><span class="section-num">2</span> Installation</li>
+    <li><span class="section-num">3</span> Quick Start</li>
+    <li><span class="section-num">4</span> How It Works &mdash; The 5-Stage Pipeline</li>
+    <li><span class="section-num">5</span> Commands Reference</li>
+    <li><span class="section-num">6</span> Configuration</li>
+    <li><span class="section-num">7</span> Authentication</li>
+    <li><span class="section-num">8</span> Generated Output</li>
+    <li><span class="section-num">9</span> Diagnostic Reports</li>
+    <li><span class="section-num">10</span> Supported Frameworks</li>
+    <li><span class="section-num">11</span> Real-World Example: Lefa Pay</li>
+    <li><span class="section-num">12</span> CI/CD Integration</li>
+    <li><span class="section-num">13</span> Troubleshooting</li>
+    <li><span class="section-num">14</span> Architecture</li>
+  </ul>
+</div>
+
+<!-- 1. INTRODUCTION -->
+<h2>1. Introduction</h2>
+
+<p>toetsLib is an AI-powered CLI tool that analyzes React repositories and automatically generates comprehensive Playwright end-to-end test suites.</p>
+
+<p>Instead of writing tests by hand, you point toetsLib at your project and it:</p>
+<ul>
+  <li>Parses your source code to understand routes, forms, API calls, and auth patterns</li>
+  <li>Starts your app and crawls it with a headless browser to discover real UI elements</li>
+  <li>Uses Claude AI to generate Playwright tests with Page Object Models</li>
+  <li>Runs the generated tests and produces a diagnostic report with fix instructions</li>
+</ul>
+
+<p>The output is a complete <code>e2e/</code> directory with <code>playwright.config.ts</code>, page objects, fixtures, test specs, and a <code>DIAGNOSTIC.md</code> that tells your team exactly what to fix if any tests fail.</p>
+
+<!-- 2. INSTALLATION -->
+<h2>2. Installation</h2>
+
+<h3>Prerequisites</h3>
+<ul>
+  <li><strong>Node.js</strong> 18 or later</li>
+  <li><strong>npm</strong> (or yarn, pnpm, bun)</li>
+  <li><strong>ANTHROPIC_API_KEY</strong> environment variable &mdash; required for test generation</li>
+</ul>
+
+<h3>Install from Source</h3>
+<pre><code>git clone &lt;repo-url&gt; toetslib
+cd toetslib
+npm install
+npx turbo build</code></pre>
+
+<h3>Run the CLI</h3>
+<pre><code># Direct execution
+node apps/cli/dist/index.js --help
+
+# Or link globally
+cd apps/cli && npm link
+toetslib --help</code></pre>
+
+<h3>Set Your API Key</h3>
+<pre><code>export ANTHROPIC_API_KEY="sk-ant-api03-..."</code></pre>
+
+<div class="callout">
+  <strong>Note:</strong> The <code>analyze</code> and <code>crawl</code> commands work without an API key since they don't use AI. Only <code>generate</code> and <code>validate</code> require it.
+</div>
+
+<!-- 3. QUICK START -->
+<h2>3. Quick Start</h2>
+
+<p>Generate a full Playwright test suite in one command:</p>
+<pre><code>toetslib generate ./my-react-app</code></pre>
+
+<p>That's it. Your tests land in <code>./e2e/</code> by default.</p>
+
+<h3>Step-by-Step First Run</h3>
+<pre><code><span class="comment"># 1. Check what toetsLib detects in your project</span>
+toetslib analyze ./my-app --json
+
+<span class="comment"># 2. See what the browser finds (starts dev server)</span>
+toetslib crawl ./my-app --verbose
+
+<span class="comment"># 3. Generate tests without running them</span>
+toetslib generate ./my-app --no-validate
+
+<span class="comment"># 4. Generate tests AND run them with diagnostics</span>
+toetslib generate ./my-app --verbose</code></pre>
+
+<!-- 4. HOW IT WORKS -->
+<h2 class="page-break">4. How It Works &mdash; The 5-Stage Pipeline</h2>
+
+<div class="pipeline-diagram">
+  <div class="pipeline-stage">1. INGEST</div>
+  <span class="pipeline-arrow">&rarr;</span>
+  <div class="pipeline-stage">2. ANALYZE</div>
+  <span class="pipeline-arrow">&rarr;</span>
+  <div class="pipeline-stage">3. CRAWL</div>
+  <span class="pipeline-arrow">&rarr;</span>
+  <div class="pipeline-stage">4. GENERATE</div>
+  <span class="pipeline-arrow">&rarr;</span>
+  <div class="pipeline-stage">5. VALIDATE</div>
+</div>
+
+<h3>Stage 1: Ingest</h3>
+<p>Reads your project and detects its configuration automatically.</p>
+<table>
+  <tr><th>Detection</th><th>Method</th></tr>
+  <tr><td>Package manager</td><td>Lock file check (package-lock.json &rarr; npm, yarn.lock &rarr; yarn, etc.)</td></tr>
+  <tr><td>Framework</td><td>Dependencies in package.json (vite + plugin-react &rarr; react-vite, next &rarr; nextjs)</td></tr>
+  <tr><td>Dev command</td><td>Reads <code>scripts.dev</code> or <code>scripts.start</code></td></tr>
+  <tr><td>Dev port</td><td>Parsed from vite.config.js / next.config.js</td></tr>
+  <tr><td>Source directory</td><td>Checks for src/, app/, pages/</td></tr>
+  <tr><td>Workspace root</td><td>Walks up directory tree to find workspace package.json</td></tr>
+</table>
+
+<h3>Stage 2: Analyze (Static Code Analysis)</h3>
+<p>Parses your source files using Babel AST to understand the application structure.</p>
+<ul>
+  <li><strong>Routes:</strong> React Router declarations, route arrays, constant references, file-based routing</li>
+  <li><strong>Components:</strong> Maps which page components render on which routes, including child components</li>
+  <li><strong>Forms:</strong> Detects form fields from both native HTML elements and custom components (InputField, MoneyInput, SelectField, etc.)</li>
+  <li><strong>API calls:</strong> Extracts endpoints from axios, fetch, TanStack Query hooks (useQuery, useMutation)</li>
+  <li><strong>Auth patterns:</strong> Identifies auth contexts, route guards, login redirects, and trial/guest modes</li>
+</ul>
+
+<h3>Stage 3: Crawl (Live Browser)</h3>
+<p>Starts your dev server and visits your app with a headless Playwright browser.</p>
+<ul>
+  <li>Visits every discovered route</li>
+  <li>Takes screenshots at 3 viewport sizes (mobile 375px, tablet 768px, desktop 1280px)</li>
+  <li>Finds all interactive elements with their selectors</li>
+  <li>Records the navigation graph (which pages link to which)</li>
+  <li>Logs console errors and failed network requests</li>
+  <li>Handles login with provided credentials (if configured)</li>
+</ul>
+
+<h3>Stage 4: Generate (AI-Powered)</h3>
+<p>Uses Claude AI to produce Playwright test code in three passes:</p>
+<table>
+  <tr><th>Pass</th><th>Input</th><th>Output</th></tr>
+  <tr><td><strong>1. Test Plan</strong></td><td>Full AppMap summary</td><td>Structured JSON: which pages get tests, what categories, test names</td></tr>
+  <tr><td><strong>2. Page Objects</strong></td><td>Per-page: crawl data + screenshot + form fields</td><td>TypeScript Page Object Model (.page.ts) per page</td></tr>
+  <tr><td><strong>3. Test Code</strong></td><td>Test plan + page object code</td><td>Playwright spec files (.spec.ts) using page objects</td></tr>
+</table>
+
+<div class="callout">
+  <strong>Screenshots are sent to the AI</strong> so it can "see" each page while writing tests. This produces much better selectors than text-only analysis.
+</div>
+
+<h3>Stage 5: Validate (Diagnostic)</h3>
+<p>Runs the generated tests and produces a diagnostic report.</p>
+<ul>
+  <li>Executes all tests via Playwright</li>
+  <li>Parses failures by category: selector, timeout, assertion, navigation</li>
+  <li>Writes <code>DIAGNOSTIC.md</code> with step-by-step fix instructions per failure</li>
+  <li>Writes <code>.toetslib-report.json</code> for machine consumption</li>
+</ul>
+
+<!-- 5. COMMANDS REFERENCE -->
+<h2 class="page-break">5. Commands Reference</h2>
+
+<h3>generate</h3>
+<p>Full pipeline: analyze, crawl, generate tests, and validate them.</p>
+<pre><code>toetslib generate &lt;repo-path&gt; [options]</code></pre>
+
+<table>
+  <tr><th>Option</th><th>Default</th><th>Description</th></tr>
+  <tr><td><code>-o, --output &lt;dir&gt;</code></td><td><code>./e2e</code></td><td>Output directory for generated tests</td></tr>
+  <tr><td><code>--auth-url &lt;url&gt;</code></td><td>&mdash;</td><td>Login page URL for authenticated testing</td></tr>
+  <tr><td><code>--auth-email &lt;email&gt;</code></td><td>&mdash;</td><td>Test account email</td></tr>
+  <tr><td><code>--auth-password &lt;pass&gt;</code></td><td>&mdash;</td><td>Test account password</td></tr>
+  <tr><td><code>--config &lt;path&gt;</code></td><td><code>.toetslib.json</code></td><td>Path to config file</td></tr>
+  <tr><td><code>--max-heal-cycles &lt;n&gt;</code></td><td>3</td><td>Max diagnostic cycles</td></tr>
+  <tr><td><code>--no-validate</code></td><td>false</td><td>Skip validation (generate only)</td></tr>
+  <tr><td><code>--verbose</code></td><td>false</td><td>Detailed debug output</td></tr>
+  <tr><td><code>--json</code></td><td>false</td><td>Output full AppMap as JSON</td></tr>
+</table>
+
+<h3>analyze</h3>
+<p>Static analysis only. Shows what toetsLib detects without starting the app.</p>
+<pre><code>toetslib analyze &lt;repo-path&gt; [--json] [--verbose] [--config &lt;path&gt;]</code></pre>
+
+<h3>crawl</h3>
+<p>Analyze + crawl. Starts the app and visits pages with a headless browser.</p>
+<pre><code>toetslib crawl &lt;repo-path&gt; [--json] [--verbose] [--auth-url ...] [--auth-email ...] [--auth-password ...]</code></pre>
+
+<h3>validate</h3>
+<p>Run existing tests and produce a diagnostic report.</p>
+<pre><code>toetslib validate &lt;repo-path&gt; [-o &lt;dir&gt;] [--verbose] [--json]</code></pre>
+
+<!-- 6. CONFIGURATION -->
+<h2 class="page-break">6. Configuration</h2>
+
+<p>Create a <code>.toetslib.json</code> or <code>toetslib.json</code> in your project root:</p>
+<pre><code>{
+  "devCommand": "npm run dev",
+  "devPort": 5173,
+  "baseUrl": "http://localhost:5173",
+  "auth": {
+    "strategy": "form",
+    "loginUrl": "/login",
+    "fields": {
+      "email": "test@example.com",
+      "password": "secret"
+    },
+    "submitSelector": "button[type=submit]"
+  },
+  "exclude": ["/admin/*"],
+  "outputDir": "./e2e",
+  "maxHealCycles": 3
+}</code></pre>
+
+<table>
+  <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+  <tr><td><code>devCommand</code></td><td>string</td><td>Dev server start command. Auto-detected if not set.</td></tr>
+  <tr><td><code>devPort</code></td><td>number</td><td>Dev server port. Auto-detected from config files.</td></tr>
+  <tr><td><code>baseUrl</code></td><td>string</td><td>Full base URL. Built from port if not set.</td></tr>
+  <tr><td><code>auth</code></td><td>object</td><td>Authentication config (see Section 7).</td></tr>
+  <tr><td><code>exclude</code></td><td>string[]</td><td>Route patterns to skip (glob syntax).</td></tr>
+  <tr><td><code>outputDir</code></td><td>string</td><td>Where to write tests. Default: <code>./e2e</code></td></tr>
+  <tr><td><code>maxHealCycles</code></td><td>number</td><td>Diagnostic retry cycles. Default: 3</td></tr>
+</table>
+
+<h3>Priority Order</h3>
+<p>When the same setting appears in multiple places:</p>
+<ol>
+  <li><strong>CLI flags</strong> (highest)</li>
+  <li><strong>Config file</strong> (.toetslib.json / toetslib.json)</li>
+  <li><strong>Auto-detected values</strong> (lowest)</li>
+</ol>
+
+<!-- 7. AUTHENTICATION -->
+<h2>7. Authentication</h2>
+
+<h3>Via CLI Flags</h3>
+<pre><code>toetslib generate ./my-app \
+  --auth-url http://localhost:3000/login \
+  --auth-email test@example.com \
+  --auth-password s3cret</code></pre>
+
+<h3>Via Config File</h3>
+<pre><code>{
+  "auth": {
+    "strategy": "form",
+    "loginUrl": "/login",
+    "fields": {
+      "email": "test@example.com",
+      "password": "secret"
+    },
+    "submitSelector": "button[type=submit]"
+  }
+}</code></pre>
+
+<h3>Trial / Guest Mode</h3>
+<p>If your app supports unauthenticated access (e.g., trial mode with localStorage-backed data), toetsLib detects this automatically. The analyzer identifies:</p>
+<ul>
+  <li>localStorage usage for data persistence</li>
+  <li>Conditional rendering based on <code>isAuthenticated</code></li>
+  <li>Feature restrictions for unauthenticated users</li>
+</ul>
+<p>No credentials needed for trial-mode testing.</p>
+
+<div class="callout callout-warn">
+  <strong>Security:</strong> Avoid committing real credentials to <code>.toetslib.json</code>. Use CLI flags or environment variables for sensitive data.
+</div>
+
+<!-- 8. GENERATED OUTPUT -->
+<h2 class="page-break">8. Generated Output</h2>
+
+<p>After running <code>toetslib generate</code>, your output directory contains:</p>
+
+<div class="file-tree">
+e2e/
+├── playwright.config.ts        <span class="comment"># Auto-configured for your project</span>
+├── pages/                      <span class="comment"># Page Object Models</span>
+│   ├── landing.page.ts
+│   ├── payroll.page.ts
+│   ├── employee-form.page.ts
+│   └── ...
+├── fixtures/                   <span class="comment"># Test data and setup</span>
+│   ├── base.fixture.ts         <span class="comment"># Extended Playwright fixtures</span>
+│   ├── test-data.ts            <span class="comment"># Mock form data (context-aware)</span>
+│   └── auth.setup.ts           <span class="comment"># Login flow (if auth configured)</span>
+├── tests/                      <span class="comment"># Test spec files</span>
+│   ├── navigation.spec.ts
+│   ├── landing.spec.ts
+│   ├── employee-create.spec.ts
+│   └── ...
+├── DIAGNOSTIC.md               <span class="comment"># Human-readable fix instructions</span>
+└── .toetslib-report.json       <span class="comment"># Machine-readable results</span>
+</div>
+
+<h3>Page Objects</h3>
+<p>Each page gets a Page Object Model with typed selectors and helper methods. Selectors are prioritized for stability:</p>
+<ol>
+  <li><code>page.getByTestId()</code> &mdash; data-testid attributes (most stable)</li>
+  <li><code>page.getByRole()</code> &mdash; ARIA roles</li>
+  <li><code>page.getByLabel()</code> &mdash; form labels</li>
+  <li><code>page.getByText()</code> &mdash; visible text</li>
+  <li><code>page.locator()</code> &mdash; CSS selectors (last resort)</li>
+</ol>
+
+<h3>Test Categories</h3>
+<table>
+  <tr><th>Category</th><th>What It Tests</th></tr>
+  <tr><td><strong>Smoke</strong></td><td>Page loads, key elements visible, no console errors</td></tr>
+  <tr><td><strong>Happy path</strong></td><td>Core user flows end-to-end (create, edit, submit)</td></tr>
+  <tr><td><strong>Validation</strong></td><td>Form errors on bad/missing input</td></tr>
+  <tr><td><strong>Edge cases</strong></td><td>Empty states, loading states, boundary conditions</td></tr>
+  <tr><td><strong>Responsive</strong></td><td>Layout at mobile (375px), tablet (768px), desktop (1280px)</td></tr>
+  <tr><td><strong>Navigation</strong></td><td>All links work, routing correct, mobile menu</td></tr>
+</table>
+
+<h3>Test Data</h3>
+<p>The <code>test-data.ts</code> fixture generates context-aware test data based on detected form fields. For South African apps, this includes SA ID numbers, ZA phone formats, and local addresses.</p>
+
+<!-- 9. DIAGNOSTIC REPORTS -->
+<h2 class="page-break">9. Diagnostic Reports</h2>
+
+<p>Instead of auto-fixing failures, toetsLib produces a diagnostic report that tells your team exactly what's wrong and how to fix it.</p>
+
+<h3>DIAGNOSTIC.md</h3>
+<p>A human-readable report with:</p>
+<ul>
+  <li>Summary table (total, passed, failed, pass rate)</li>
+  <li>Failures grouped by category</li>
+  <li>Step-by-step fix instructions per failure</li>
+  <li>Actionable recommendations</li>
+</ul>
+
+<h3>Failure Categories</h3>
+<table>
+  <tr><th>Category</th><th>What It Means</th><th>Typical Fix</th></tr>
+  <tr><td><strong>Selector</strong></td><td>Element not found in DOM</td><td>Add <code>data-testid</code> attributes, update locator to use <code>getByRole</code></td></tr>
+  <tr><td><strong>Timeout</strong></td><td>Element didn't appear in time</td><td>Check if backend APIs are running, add proper wait conditions</td></tr>
+  <tr><td><strong>Assertion</strong></td><td>Content doesn't match expected</td><td>Check formatting (currency, dates), use flexible matchers</td></tr>
+  <tr><td><strong>Navigation</strong></td><td>Page failed to load/redirect</td><td>Check route config, auth requirements, HTTPS settings</td></tr>
+</table>
+
+<h3>.toetslib-report.json</h3>
+<p>Machine-readable report for CI/CD integration:</p>
+<pre><code>{
+  "summary": {
+    "total": 45,
+    "passed": 42,
+    "failed": 3,
+    "passRate": "93%"
+  },
+  "failures": [
+    {
+      "test": "shows validation error when email is empty",
+      "file": "employee-create.spec.ts",
+      "category": "selector",
+      "error": "locator('.error-msg') resolved to 0 elements",
+      "fix": "Add data-testid to error message element..."
+    }
+  ],
+  "recommendations": [...]
+}</code></pre>
+
+<!-- 10. SUPPORTED FRAMEWORKS -->
+<h2>10. Supported Frameworks</h2>
+
+<table>
+  <tr><th>Framework</th><th>Detection</th><th>Notes</th></tr>
+  <tr><td><strong>React + Vite</strong></td><td><code>vite</code> + <code>@vitejs/plugin-react</code></td><td>Full support including workspace monorepos, HTTPS</td></tr>
+  <tr><td><strong>Create React App</strong></td><td><code>react-scripts</code></td><td>Detected from scripts.start</td></tr>
+  <tr><td><strong>Next.js</strong></td><td><code>next</code></td><td>App Router and Pages Router</td></tr>
+</table>
+
+<h3>Route Detection Patterns</h3>
+<table>
+  <tr><th>Pattern</th><th>Supported</th></tr>
+  <tr><td><code>&lt;Route path="..." element={...} /&gt;</code></td><td>Yes</td></tr>
+  <tr><td><code>createBrowserRouter([...])</code></td><td>Yes</td></tr>
+  <tr><td>Route arrays mapped with <code>.map()</code></td><td>Yes</td></tr>
+  <tr><td>Route constants in separate files</td><td>Yes</td></tr>
+  <tr><td>File-based routing (Next.js)</td><td>Yes</td></tr>
+  <tr><td>Dynamic route params (<code>/user/:id</code>)</td><td>Yes</td></tr>
+</table>
+
+<!-- 11. REAL-WORLD EXAMPLE -->
+<h2 class="page-break">11. Real-World Example: Lefa Pay</h2>
+
+<p>Lefa Pay is a South African payroll management SPA built with React + Vite. Here's how toetsLib analyzes it:</p>
+
+<h3>Ingest Results</h3>
+<table>
+  <tr><th>Field</th><th>Detected</th></tr>
+  <tr><td>Framework</td><td>react-vite</td></tr>
+  <tr><td>Package manager</td><td>npm (workspaces)</td></tr>
+  <tr><td>Dev command</td><td>npm run dev</td></tr>
+  <tr><td>Dev port</td><td>57760</td></tr>
+  <tr><td>HTTPS</td><td>Yes (ASP.NET dev certs)</td></tr>
+  <tr><td>Workspace root</td><td>ejm-lefa/src/</td></tr>
+</table>
+
+<h3>Analysis Results</h3>
+<table>
+  <tr><th>Metric</th><th>Count</th></tr>
+  <tr><td>Routes</td><td>13 (8 public, 5 auth-required)</td></tr>
+  <tr><td>Page components</td><td>9 with child component trees</td></tr>
+  <tr><td>Forms</td><td>6 (employee: 30 fields, company: 17 fields, landing: 4 fields)</td></tr>
+  <tr><td>API endpoints</td><td>109</td></tr>
+  <tr><td>Auth type</td><td>Context-based with trial mode</td></tr>
+</table>
+
+<h3>Crawl Results</h3>
+<table>
+  <tr><th>Metric</th><th>Count</th></tr>
+  <tr><td>Pages crawled</td><td>8</td></tr>
+  <tr><td>Screenshots captured</td><td>24 (8 pages &times; 3 viewports)</td></tr>
+  <tr><td>Interactive elements</td><td>72</td></tr>
+  <tr><td>Navigation edges</td><td>13</td></tr>
+</table>
+
+<h3>Running It</h3>
+<pre><code>toetslib generate ./ejm-lefa/src/pay.Client \
+  --output ./ejm-lefa/src/e2e \
+  --verbose</code></pre>
+
+<!-- 12. CI/CD INTEGRATION -->
+<h2 class="page-break">12. CI/CD Integration</h2>
+
+<h3>GitHub Actions</h3>
+<pre><code>name: E2E Tests
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install toetsLib
+        run: |
+          cd toetslib && npm install && npx turbo build
+
+      - name: Generate tests
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          toetslib generate . --output ./e2e --no-validate
+
+      - name: Run tests
+        run: |
+          cd e2e && npx playwright install chromium
+          npx playwright test
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            e2e/DIAGNOSTIC.md
+            e2e/.toetslib-report.json
+            e2e/test-results/</code></pre>
+
+<h3>Quality Gate</h3>
+<pre><code><span class="comment"># Fail CI if pass rate is below threshold</span>
+PASS_RATE=$(jq -r '.summary.passRate' e2e/.toetslib-report.json | tr -d '%')
+if [ "$PASS_RATE" -lt 80 ]; then
+  echo "Pass rate $PASS_RATE% is below 80% threshold"
+  exit 1
+fi</code></pre>
+
+<!-- 13. TROUBLESHOOTING -->
+<h2>13. Troubleshooting</h2>
+
+<h4>"Framework not detected"</h4>
+<p>Ensure <code>package.json</code> lists React and a bundler (vite, react-scripts, next) as dependencies. Use <code>.toetslib.json</code> to manually specify <code>devCommand</code> and <code>devPort</code>.</p>
+
+<h4>"Dev server failed to start"</h4>
+<ul>
+  <li>Check that <code>npm run dev</code> works when run manually</li>
+  <li>For monorepos, toetsLib auto-detects the workspace root and installs from there</li>
+  <li>Check if the port is already in use: <code>lsof -ti :PORT</code></li>
+</ul>
+
+<h4>"No routes found"</h4>
+<p>Run <code>toetslib analyze ./my-app --json --verbose</code> to see what the parser finds. Routes may use patterns the AST parser doesn't recognize yet.</p>
+
+<h4>"ANTHROPIC_API_KEY not set"</h4>
+<p>The <code>generate</code> command requires an API key. Set it: <code>export ANTHROPIC_API_KEY="sk-ant-..."</code></p>
+
+<h4>"Tests fail after generation"</h4>
+<p>Check <code>DIAGNOSTIC.md</code> for categorized failure analysis with fix instructions. Most common issues are selector mismatches (add <code>data-testid</code> attributes) or missing backend APIs (run the backend or mock responses).</p>
+
+<!-- 14. ARCHITECTURE -->
+<h2 class="page-break">14. Architecture</h2>
+
+<p>toetsLib is a Turborepo monorepo with focused packages:</p>
+
+<table>
+  <tr><th>Package</th><th>Purpose</th></tr>
+  <tr><td><code>@toetslib/cli</code></td><td>CLI entry point with 4 commands (commander)</td></tr>
+  <tr><td><code>@toetslib/core</code></td><td>Pipeline orchestrator, AppMap types (15 interfaces)</td></tr>
+  <tr><td><code>@toetslib/shared</code></td><td>Logger, file utilities, Claude API client with prompt caching</td></tr>
+  <tr><td><code>@toetslib/ingest</code></td><td>Framework detection, dev server management</td></tr>
+  <tr><td><code>@toetslib/analyzer</code></td><td>Babel AST-based static code analysis</td></tr>
+  <tr><td><code>@toetslib/crawler</code></td><td>Headless Playwright browser crawling</td></tr>
+  <tr><td><code>@toetslib/generator</code></td><td>3-pass AI test generation via Claude API</td></tr>
+  <tr><td><code>@toetslib/validator</code></td><td>Test runner and diagnostic report writer</td></tr>
+</table>
+
+<h3>AppMap &mdash; The Central Data Model</h3>
+<p>A single TypeScript object flows through all 5 pipeline stages. Each stage enriches it with its findings:</p>
+<ul>
+  <li><strong>Stage 1:</strong> <code>project</code> (framework, port, dev command)</li>
+  <li><strong>Stage 2:</strong> <code>routes</code>, <code>forms</code>, <code>apiCalls</code>, <code>auth</code>, <code>components</code></li>
+  <li><strong>Stage 3:</strong> <code>pages</code>, <code>interactions</code>, <code>screenshots</code>, <code>navigationGraph</code></li>
+  <li><strong>Stage 4:</strong> <code>testPlan</code> + files written to disk</li>
+  <li><strong>Stage 5:</strong> <code>results</code> + diagnostic report</li>
+</ul>
+
+<h3>AI Strategy</h3>
+<p>The LLM client uses Anthropic's prompt caching (<code>cache_control: { type: "ephemeral" }</code>) on the system prompt. Within the 5-minute TTL, all per-page generation calls reuse the cached system prompt, reducing cost and latency.</p>
+
+<p>Screenshots are sent as images to the AI during page object generation, so the model can "see" the actual page layout while writing selectors and test code.</p>
+
+<footer>
+  <p>toetsLib v0.1.0 &mdash; "toets" is Afrikaans for "test"</p>
+  <p>Generated April 2026</p>
+</footer>
+
+</body>
+</html>

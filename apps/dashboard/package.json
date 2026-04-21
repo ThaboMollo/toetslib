@@ -1,0 +1,6 @@
+{
+  "name": "@toetslib/dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Phase 2: Web dashboard for toetsLib (not yet implemented)"
+}
