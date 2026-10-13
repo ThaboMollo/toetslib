@@ -14,10 +14,27 @@ export const VIEWPORTS = {
 export class BrowserManager {
   private browser: Browser | null = null;
 
-  async launch(): Promise<void> {
-    this.browser = await chromium.launch({
-      headless: true,
-    });
+  /**
+   * @param channel An installed browser to drive ("chrome", "msedge", ...).
+   *   Omit to use Playwright's bundled Chromium.
+   */
+  async launch(channel?: string | null): Promise<void> {
+    try {
+      this.browser = await chromium.launch({
+        headless: true,
+        ...(channel ? { channel } : {}),
+      });
+    } catch (error) {
+      const detail = (error as Error).message;
+      if (!channel && /Executable doesn't exist/i.test(detail)) {
+        throw new Error(
+          `${detail}\n\nPlaywright's bundled browser is not installed. ` +
+            `Run "npx playwright install chromium", or pass ` +
+            `--browser-channel chrome to drive an already-installed browser.`
+        );
+      }
+      throw error;
+    }
   }
 
   async newContext(viewport?: ViewportSize): Promise<BrowserContext> {

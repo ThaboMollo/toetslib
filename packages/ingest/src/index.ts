@@ -18,11 +18,13 @@ export class IngestStage implements StageRunner {
     const name = detector.detectName(repoPath);
     const packageManager = detector.detectPackageManager(repoPath);
     const framework = detector.detectFramework(repoPath);
-    const devCommand = detector.detectDevCommand(repoPath);
-    const devPort = detector.detectDevPort(repoPath, framework);
+    // Explicit config wins over detection: some stacks cannot be inferred from
+    // the repo at all, and others are started by hand on a non-default port.
+    const devCommand =
+      config.devCommand ?? detector.detectDevCommand(repoPath);
+    const devPort =
+      config.devPort ?? detector.detectDevPort(repoPath, framework);
     const srcDir = structure.detectSrcDir(repoPath, framework);
-    const baseUrl =
-      config.baseUrl ?? structure.detectBaseUrl(devPort, repoPath, framework);
 
     return {
       ...appMap,

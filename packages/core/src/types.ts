@@ -2,7 +2,7 @@ export interface AppMap {
   project: {
     name: string;
     path: string;
-    framework: "react-vite" | "react-cra" | "nextjs";
+    framework: "react-vite" | "react-cra" | "nextjs" | "spring-thymeleaf";
     packageManager: "npm" | "yarn" | "pnpm" | "bun";
     devCommand: string;
     devPort: number;
@@ -32,6 +32,12 @@ export interface Route {
   componentName: string;
   isPublic: boolean;
   authGuard: string | null;
+  /**
+   * True when the path contains placeholders ({id}, :id, [slug]) and so cannot
+   * be fetched literally. Such routes seed the crawl's known-path set but are
+   * only visited once a real link to a concrete instance is discovered.
+   */
+  templated?: boolean;
 }
 
 export interface FormSpec {
@@ -159,4 +165,33 @@ export interface PipelineConfig {
   verbose: boolean;
   skipValidation: boolean;
   jsonOutput: boolean;
+
+  /**
+   * Treat the app at baseUrl as already running: skip dependency install and
+   * dev-server spawn entirely. Required for stacks toetsLib cannot boot itself
+   * (Spring Boot, Rails, Django, or anything started by hand).
+   */
+  externalServer: boolean;
+  /** Overrides detection. Ignored when externalServer is true. */
+  devCommand: string | null;
+  /** Overrides detection. */
+  devPort: number | null;
+  /** Extra seed paths for the crawl, merged with statically discovered routes. */
+  routes: string[];
+  /**
+   * Launch an installed browser instead of Playwright's bundled Chromium
+   * ("chrome", "msedge", "chrome-beta", ...). Useful where the bundled
+   * download is unavailable, blocked, or simply not worth fetching.
+   */
+  browserChannel: string | null;
+  crawl: CrawlConfig;
+}
+
+export interface CrawlConfig {
+  /** Hard ceiling on pages visited, so link-following cannot run away. */
+  maxPages: number;
+  /** Follow internal links to pages that static analysis never found. */
+  followLinks: boolean;
+  /** Path prefixes to never visit (logout, destructive actions, binaries). */
+  exclude: string[];
 }

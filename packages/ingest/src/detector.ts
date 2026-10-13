@@ -39,10 +39,37 @@ export class ProjectDetector {
 
     if (allDeps["vite"]) return "react-vite";
 
+    // No JS manifest to go on. Check for a JVM build before assuming React,
+    // otherwise a Spring app silently inherits "npm run dev" on port 5173.
+    if (this.isSpringProject(dir)) return "spring-thymeleaf";
+
     return "react-vite";
   }
 
+  /** A Maven or Gradle build with Spring Boot on the classpath. */
+  isSpringProject(dir: string): boolean {
+    for (const build of ["pom.xml", "build.gradle", "build.gradle.kts"]) {
+      const buildPath = join(dir, build);
+      if (!existsSync(buildPath)) continue;
+      try {
+        if (readFileSync(buildPath, "utf-8").includes("spring-boot")) {
+          return true;
+        }
+      } catch {
+        // unreadable build file
+      }
+    }
+    return false;
+  }
+
   detectDevCommand(dir: string): string {
+    if (this.isSpringProject(dir)) {
+      return existsSync(join(dir, "mvnw"))
+        ? "./mvnw spring-boot:run"
+        : existsSync(join(dir, "gradlew"))
+          ? "./gradlew bootRun"
+          : "mvn spring-boot:run";
+    }
     const pkg = this.readPackageJson(dir);
     if (pkg.scripts?.["dev"]) return "npm run dev";
     if (pkg.scripts?.["start"]) return "npm run start";
@@ -57,12 +84,29 @@ export class ProjectDetector {
         return this.parseNextPort(dir) ?? 3000;
       case "react-cra":
         return 3000;
+      case "spring-thymeleaf":
+        return this.parseSpringPort(dir) ?? 8080;
     }
   }
 
   detectName(dir: string): string {
     const pkg = this.readPackageJson(dir);
-    return pkg.name ?? basename(dir);
+    if (pkg.name) return pkg.name;
+
+    const pom = join(dir, "pom.xml");
+    if (existsSync(pom)) {
+      try {
+        // The first <artifactId> inside <project> may belong to <parent>, so
+        // prefer <name> and fall back to the basename rather than guessing.
+        const content = readFileSync(pom, "utf-8");
+        const name = content.match(/<name>([^<]+)<\/name>/);
+        if (name?.[1] && !name[1].includes("$")) return name[1].trim();
+      } catch {
+        // unreadable pom
+      }
+    }
+
+    return basename(dir);
   }
 
   findWorkspaceRoot(dir: string): string | null {
@@ -125,6 +169,47 @@ export class ProjectDetector {
         if (portMatch) {
           return parseInt(portMatch[1]!, 10);
         }
+      } catch {
+        // can't read config
+      }
+    }
+
+    return null;
+  }
+
+  /** server.port from application.yaml/yml/properties, if it is a literal. */
+  private parseSpringPort(dir: string): number | null {
+    const resourceDir = join(dir, "src", "main", "resources");
+    const candidates = [
+      "application.yaml",
+      "application.yml",
+      "application.properties",
+    ];
+
+    for (const name of candidates) {
+      const configPath = join(resourceDir, name);
+      if (!existsSync(configPath)) continue;
+
+      try {
+        const content = readFileSync(configPath, "utf-8");
+
+        if (name.endsWith(".properties")) {
+          const match = content.match(/^\s*server\.port\s*[=:]\s*(\d+)/m);
+          if (match) return parseInt(match[1]!, 10);
+          continue;
+        }
+
+        // YAML: server.port is nested, and is commonly ${PORT:8080}.
+        const serverBlock = content.match(
+          /^server:\s*$([\s\S]*?)(?=^\S|\Z)/m
+        );
+        const scope = serverBlock?.[1] ?? content;
+        const placeholder = scope.match(
+          /^\s{2,}port:\s*\$\{[A-Za-z0-9_]+:(\d+)\}/m
+        );
+        if (placeholder) return parseInt(placeholder[1]!, 10);
+        const literal = scope.match(/^\s{2,}port:\s*(\d+)\s*$/m);
+        if (literal) return parseInt(literal[1]!, 10);
       } catch {
         // can't read config
       }

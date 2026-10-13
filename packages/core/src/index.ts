@@ -16,6 +16,7 @@ export type {
   Screenshot,
   NavEdge,
   PipelineConfig,
+  CrawlConfig,
 } from "./types.js";
 
 export { Pipeline } from "./pipeline.js";

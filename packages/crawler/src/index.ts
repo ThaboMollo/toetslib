@@ -18,33 +18,41 @@ export class CrawlerStage implements StageRunner {
     const logger = new Logger(config.verbose);
     const { project } = appMap;
 
-    // Determine base URL
     const baseUrl = config.baseUrl ?? `http://localhost:${project.devPort}`;
 
-    // Start dev server
-    const devServer = new DevServerManager(config.verbose);
-    const detector = await import("@toetslib/ingest").then(
-      (m) => new m.ProjectDetector()
-    );
-    const workspaceRoot = detector.findWorkspaceRoot(project.path);
+    // When the app is already running, do not install dependencies or spawn a
+    // dev server. Stacks toetsLib cannot boot (Spring Boot, Rails, Django) are
+    // reachable only this way, and npm install would fail outright in a repo
+    // with no package.json.
+    const devServer = config.externalServer
+      ? null
+      : new DevServerManager(config.verbose);
 
-    logger.debug(`Starting dev server at ${baseUrl}`);
-    await devServer.start(
-      project.path,
-      project.devCommand,
-      baseUrl,
-      workspaceRoot
-    );
+    if (devServer) {
+      const detector = await import("@toetslib/ingest").then(
+        (m) => new m.ProjectDetector()
+      );
+      const workspaceRoot = detector.findWorkspaceRoot(project.path);
+
+      logger.debug(`Starting dev server at ${baseUrl}`);
+      await devServer.start(
+        project.path,
+        project.devCommand,
+        baseUrl,
+        workspaceRoot
+      );
+    } else {
+      logger.info(`Using already-running app at ${baseUrl}`);
+      await this.requireReachable(baseUrl);
+    }
 
     try {
-      // Launch browser
       const browser = new BrowserManager();
-      await browser.launch();
+      await browser.launch(config.browserChannel);
 
       try {
         const context = await browser.newContext();
 
-        // Attempt authentication
         const authHandler = new AuthHandler(config.verbose);
         const page = await context.newPage();
         const isAuthenticated = await authHandler.login(page, baseUrl, config);
@@ -58,23 +66,20 @@ export class CrawlerStage implements StageRunner {
           logger.debug("No auth configured — crawling public routes only");
         }
 
-        // Visit all routes
         const navigator = new PageNavigator(config.repoPath, config.verbose);
-        const { pages, navEdges } = await navigator.visitRoutes(
+        const { pages, navEdges, screenshots } = await navigator.crawl(
           context,
           appMap.routes,
           baseUrl,
-          isAuthenticated
+          isAuthenticated,
+          config.crawl
         );
 
-        // Collect all screenshots and interactions from crawled pages
-        const allScreenshots = pages.flatMap((p) => {
-          // Screenshots are stored per-page by the screenshotter
-          // The page object has the desktop screenshot path
-          return [];
-        });
-
         const allInteractions = pages.flatMap((p) => p.interactiveElements);
+
+        logger.info(
+          `Crawled ${pages.length} pages, ${screenshots.length} screenshots, ${navEdges.length} nav edges`
+        );
 
         await context.close();
 
@@ -82,14 +87,40 @@ export class CrawlerStage implements StageRunner {
           ...appMap,
           pages,
           interactions: allInteractions,
+          // Previously dropped: the generator sends these to the model as
+          // visual context, so losing them silently degraded every test.
+          screenshots,
           navigationGraph: navEdges,
         };
       } finally {
         await browser.close();
       }
     } finally {
-      logger.debug("Stopping dev server");
-      await devServer.stop();
+      if (devServer) {
+        logger.debug("Stopping dev server");
+        await devServer.stop();
+      }
+    }
+  }
+
+  /** Fail with a clear message rather than 30s timeouts on every route. */
+  private async requireReachable(baseUrl: string): Promise<void> {
+    try {
+      const response = await fetch(baseUrl, {
+        method: "GET",
+        redirect: "manual",
+        signal: AbortSignal.timeout(15000),
+      });
+      // Any HTTP response proves something is listening; 404 at the root is
+      // fine for an app whose landing page lives elsewhere.
+      if (response.status >= 500) {
+        throw new Error(`responded ${response.status}`);
+      }
+    } catch (error) {
+      throw new Error(
+        `No app reachable at ${baseUrl} (${(error as Error).message}). ` +
+          `Start it first, or drop --external-server to let toetsLib boot it.`
+      );
     }
   }
 }

@@ -45,7 +45,7 @@ export class GeneratorStage implements StageRunner {
     await fixtureWriter.generate(appMap);
 
     const configWriter = new ConfigWriter(config.outputDir);
-    await configWriter.generate(appMap);
+    await configWriter.generate(appMap, config);
     logger.succeed("Fixtures and playwright.config.ts generated");
 
     // Report token usage

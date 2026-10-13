@@ -2,6 +2,9 @@
   "devCommand": "npm run dev",
   "devPort": 5173,
   "baseUrl": "http://localhost:5173",
+
+  "externalServer": false,
+
   "auth": {
     "strategy": "form",
     "loginUrl": "/login",
@@ -11,7 +14,15 @@
     },
     "submitSelector": "button[type=submit]"
   },
-  "exclude": [],
+
+  "routes": [],
+
+  "crawl": {
+    "maxPages": 150,
+    "followLinks": true,
+    "exclude": ["/logout"]
+  },
+
   "outputDir": "./e2e",
   "maxHealCycles": 3
 }

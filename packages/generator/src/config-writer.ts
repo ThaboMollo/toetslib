@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import type { AppMap } from "@toetslib/core";
+import type { AppMap, PipelineConfig } from "@toetslib/core";
 import { writeFileContent } from "@toetslib/shared";
 
 export class ConfigWriter {
@@ -9,10 +9,27 @@ export class ConfigWriter {
     this.outputDir = outputDir;
   }
 
-  async generate(appMap: AppMap): Promise<void> {
-    const baseUrl = `http${appMap.project.framework === "react-vite" ? "s" : ""}://localhost:${appMap.project.devPort}`;
+  async generate(appMap: AppMap, config?: PipelineConfig): Promise<void> {
+    // Prefer the URL actually crawled. Falling back to localhost:devPort was
+    // previously unconditional, which pointed the generated suite at the wrong
+    // host whenever --base-url was used — and guessed https for every Vite app.
+    const baseUrl =
+      config?.baseUrl ?? `http://localhost:${appMap.project.devPort}`;
 
-    const config = `import { defineConfig, devices } from '@playwright/test';
+    // An externally managed app must not be booted by Playwright: the command
+    // either does not exist or takes far longer than a webServer timeout.
+    const webServer = config?.externalServer
+      ? ""
+      : `
+  webServer: {
+    command: '${appMap.project.devCommand}',
+    url: '${baseUrl}',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000,
+    ignoreHTTPSErrors: true,
+  },`;
+
+    const contents = `import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
@@ -35,20 +52,13 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-  ],
-  webServer: {
-    command: '${appMap.project.devCommand}',
-    url: '${baseUrl}',
-    reuseExistingServer: !process.env.CI,
-    timeout: 60000,
-    ignoreHTTPSErrors: true,
-  },
+  ],${webServer}
 });
 `;
 
     await writeFileContent(
       join(this.outputDir, "playwright.config.ts"),
-      config
+      contents
     );
   }
 }

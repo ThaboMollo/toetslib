@@ -3,7 +3,7 @@
 **Version:** 0.1.0  
 **"toets" is Afrikaans for "test"**
 
-toetsLib is an AI-powered CLI tool that analyzes React repositories and automatically generates comprehensive Playwright end-to-end test suites. Point it at your repo, and it figures out your routes, forms, API calls, and auth patterns, then writes tests that actually work.
+toetsLib is an AI-powered CLI tool that analyzes a web application's repository and automatically generates comprehensive Playwright end-to-end test suites. React (Vite, CRA, Next.js) and Spring Boot + Thymeleaf are supported. Point it at your repo, and it figures out your routes, forms, API calls, and auth patterns, then writes tests that actually work.
 
 ---
 
@@ -18,7 +18,8 @@ toetsLib is an AI-powered CLI tool that analyzes React repositories and automati
    - [crawl](#crawl)
    - [validate](#validate)
 5. [Configuration](#configuration)
-6. [Authentication](#authentication)
+6. [Server-Rendered Apps](#server-rendered-apps-spring-boot-and-anything-toetslib-cannot-boot)
+7. [Authentication](#authentication)
 7. [What Gets Generated](#what-gets-generated)
 8. [Self-Healing](#self-healing)
 9. [Supported Frameworks](#supported-frameworks)
@@ -359,6 +360,87 @@ When the same setting appears in multiple places, this is the priority:
 
 ---
 
+## Server-Rendered Apps (Spring Boot, and anything toetsLib cannot boot)
+
+toetsLib normally starts your app itself with `npm install` + `npm run dev`. That
+is impossible for a stack with no `package.json`, and undesirable whenever you
+already have the app running. Use `--external-server` (or `--base-url`, which
+implies it):
+
+```bash
+# 1. Start the app yourself
+docker compose up -d
+./mvnw spring-boot:run
+
+# 2. Point toetsLib at it
+toetslib crawl . --base-url http://localhost:8080
+```
+
+With `--external-server`, toetsLib skips dependency install and dev-server
+spawn, checks the URL is reachable, and crawls. The generated
+`playwright.config.ts` omits its `webServer` block for the same reason.
+
+### How Spring routes are found
+
+There is no React Router tree to parse, so the analyzer reads controller
+annotations instead:
+
+- `@Controller` / `@RestController` classes are scanned for `@GetMapping`,
+  `@PostMapping`, `@PutMapping`, `@DeleteMapping`, `@PatchMapping`, and
+  `@RequestMapping`.
+- A class-level `@RequestMapping("/prefix")` is prepended to each method path.
+- Only GET mappings become crawlable routes. Other verbs are recorded as
+  `apiCalls` so the generator still knows the write surface exists.
+- `SecurityConfig` is read to work out which paths are public and which role
+  each protected prefix needs, so an unauthenticated crawl does not waste time
+  on pages that only redirect to the login form.
+
+Paths containing a `@PathVariable` placeholder (`/jobs/{slug}`) cannot be
+fetched literally. They are marked `templated`: they tell the crawler which
+discovered URLs belong to the app, but are never requested directly. The
+concrete URLs come from link-following instead.
+
+### Link-following
+
+The crawler is breadth-first. It seeds from the statically discovered routes,
+then follows internal links to pages static analysis never saw — which is how
+server-rendered URLs like `/jobs/senior-developer-cape-town` get tested at all.
+
+| Option | Default | Effect |
+|--------|---------|--------|
+| `--max-pages <n>` | 150 | Hard ceiling on pages visited |
+| `--no-follow-links` | off | Visit only statically discovered routes |
+| `--browser-channel <name>` | bundled Chromium | Drive an installed browser (`chrome`, `msedge`) instead |
+| `crawl.exclude` in config | `/logout`, `/signout`, `/sign-out` | Path prefixes never visited |
+
+`/logout` is excluded by default because crawling it silently ends the
+authenticated session, making every page visited afterwards look public.
+
+### Using an installed browser
+
+toetsLib normally drives Playwright's bundled Chromium, which `npx playwright
+install chromium` downloads. Where that download is blocked, unreliable, or not
+worth fetching, point it at a browser already on the machine:
+
+```bash
+toetslib crawl . --base-url http://localhost:8080 --browser-channel chrome
+```
+
+Accepts any Playwright channel: `chrome`, `msedge`, `chrome-beta`, and so on.
+
+### Seeding extra paths
+
+Static analysis cannot see paths that only exist at runtime. Add them in
+`.toetslib.json`:
+
+```json
+{
+  "routes": ["/jobs?query=developer", "/guides"]
+}
+```
+
+---
+
 ## Authentication
 
 toetsLib supports testing authenticated pages by logging in with test credentials.
@@ -524,6 +606,7 @@ The report includes actionable recommendations based on the failure patterns fou
 | **React + Vite** | `vite` + `@vitejs/plugin-react` in dependencies | Full support including workspace monorepos |
 | **Create React App** | `react-scripts` in dependencies | Detected from `scripts.start` |
 | **Next.js** | `next` in dependencies | App Router and Pages Router |
+| **Spring Boot + Thymeleaf** | `spring-boot` in `pom.xml`/`build.gradle`, no `package.json` | Routes from controller annotations; requires `--external-server` |
 
 ### Route Detection
 

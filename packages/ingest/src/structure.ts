@@ -20,6 +20,12 @@ export class ProjectStructure {
         if (existsSync(join(dir, "src"))) return "src";
         return ".";
       }
+      case "spring-thymeleaf": {
+        if (existsSync(join(dir, "src", "main", "java"))) return "src/main/java";
+        if (existsSync(join(dir, "src", "main", "kotlin"))) return "src/main/kotlin";
+        if (existsSync(join(dir, "src"))) return "src";
+        return ".";
+      }
     }
   }
 
